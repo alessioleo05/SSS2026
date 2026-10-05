@@ -1,1 +1,1 @@
-"# SSS2026 Repository" 
+"# SSS2026 - Versione del branch modifica-conflitto" 
