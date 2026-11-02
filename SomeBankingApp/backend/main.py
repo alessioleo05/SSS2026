@@ -6,13 +6,31 @@ import string
 from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from sqlalchemy import Column, DateTime, Enum as SAEnum, ForeignKey, Integer, Numeric, String, create_engine
 from sqlalchemy.orm import Session, declarative_base, relationship, sessionmaker
 
-from fastapi.middleware.cors import CORSMiddleware
+# --- FastAPI Application & CORS Setup ---
 
+app = FastAPI(title="Simple Banking Backend API", version="1.0.0")
 
+origins = [
+    "http://localhost",
+    "http://localhost:80",
+    "http://127.0.0.1",
+    "http://127.0.0.1:80",
+    "http://localhost:4200",
+    "http://127.0.0.1:4200"
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- Database Setup ---
 
@@ -31,7 +49,6 @@ def get_db():
 
 
 # --- Database Models ---
-
 
 class TransactionType(str, Enum):
     IBAN_TRANSFER = "IBAN_TRANSFER"
@@ -92,7 +109,6 @@ Base.metadata.create_all(bind=engine)
 
 # --- Pydantic Schemas ---
 
-
 class UserCreate(BaseModel):
     full_name: str
     email: str
@@ -147,7 +163,6 @@ class CardPaymentRequest(BaseModel):
 
 # --- Helper Generators ---
 
-
 def generate_iban(country_code="DE") -> str:
     random_digits = "".join(random.choices(string.digits, k=18))
     return f"{country_code}89{random_digits}"
@@ -157,20 +172,7 @@ def generate_card_number() -> str:
     return "4000" + "".join(random.choices(string.digits, k=12))
 
 
-# --- FastAPI Application ---
-
-app = FastAPI(title="Simple Banking Backend API", version="1.0.0")
-
-# Add this right after app = FastAPI(...) in your Python code:
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:4200"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
+# --- API Endpoints ---
 
 @app.post("/users/", status_code=status.HTTP_201_CREATED)
 def create_user(payload: UserCreate, db: Session = Depends(get_db)):
@@ -183,11 +185,10 @@ def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(user)
 
-    # Automatically provision a checking account with a generated IBAN
     initial_account = BankAccount(
         user_id=user.id,
         iban=generate_iban(),
-        balance=Decimal("1000.00"),  # Starter balance for testing
+        balance=Decimal("1000.00"),
     )
     db.add(initial_account)
     db.commit()
@@ -217,7 +218,6 @@ def transfer_via_iban(transfer: IBANTransferRequest, db: Session = Depends(get_d
     if sender.balance < transfer.amount:
         raise HTTPException(status_code=400, detail="Insufficient funds")
 
-    # Atomic state mutation
     sender.balance -= transfer.amount
     receiver.balance += transfer.amount
 
@@ -273,7 +273,6 @@ def recharge_card(payload: CardRechargeRequest, db: Session = Depends(get_db)):
     if account.balance < payload.amount:
         raise HTTPException(status_code=400, detail="Insufficient funds in bank account")
 
-    # Transfer funds from bank account into prepaid card
     account.balance -= payload.amount
     card.balance += payload.amount
 
@@ -305,7 +304,6 @@ def make_card_payment(payment: CardPaymentRequest, db: Session = Depends(get_db)
     if card.is_active != "ACTIVE":
         raise HTTPException(status_code=400, detail="Card is blocked or inactive")
 
-    # Card verification check
     if (
         card.cvv != payment.cvv
         or card.expiry_month != payment.expiry_month
@@ -313,11 +311,9 @@ def make_card_payment(payment: CardPaymentRequest, db: Session = Depends(get_db)
     ):
         raise HTTPException(status_code=400, detail="Invalid card verification details")
 
-    # Balance check
     if card.balance < payment.amount:
         raise HTTPException(status_code=400, detail="Declined: Insufficient card balance")
 
-    # Process deduction
     card.balance -= payment.amount
 
     log = TransactionLog(
