@@ -1,0 +1,27 @@
+services:
+  backend:
+    image: banking-be:prod
+    expose:
+      - "8000"
+    networks:
+      - banking-net
+
+  frontend:
+    image: banking-fe:prod
+    expose:
+      - "80"
+    networks:
+      - banking-net
+
+  nginx:
+    image: banking-proxy:prod
+    ports:
+      - "80:80"
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - banking-net
+
+networks:
+  banking-net:
