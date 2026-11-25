@@ -16,13 +16,13 @@ pipeline {
 
         stage('Build Frontend (FE)') {
             steps {
-                sh 'docker build -f fronted/Dockerfile -t ${FE_IMAGE} fronted'
+                sh 'docker build -f SomeBankingApp/frontend/Dockerfile -t ${FE_IMAGE} SomeBankingApp/frontend'
             }
         }
 
         stage('Build Backend (BE)') {
             steps {
-                sh 'docker build -f backend/Dockerfile -t ${BE_IMAGE} backend'
+                sh 'docker build -f SomeBankingApp/backend/Dockerfile -t ${BE_IMAGE} SomeBankingApp/backend'
             }
         }
     }
