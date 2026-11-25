@@ -1,38 +1,21 @@
 pipeline {
     agent any
 
-    environment {
-        FE_IMAGE = "somebankingapp-fe:${BUILD_NUMBER}"
-        BE_IMAGE = "somebankingapp-be:${BUILD_NUMBER}"
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/alessioleo05/SSS2026.git'
+                git branch: 'main', url: 'https://github.com/alessioleo05/SomeBankingApp.git'
             }
         }
-
-        stage('Build Frontend (FE)') {
+        stage('Build Backend') {
             steps {
-                sh 'docker build -f SomeBankingApp/frontend/Dockerfile -t ${FE_IMAGE} SomeBankingApp/frontend'
+                sh 'docker build -t backend-container ./backend'
             }
         }
-
-        stage('Build Backend (BE)') {
+        stage('Build Frontend') {
             steps {
-                sh 'docker build -f SomeBankingApp/backend/Dockerfile -t ${BE_IMAGE} SomeBankingApp/backend'
+                sh 'docker build -t frontend-container ./frontend'
             }
-        }
-    }
-
-    post {
-        success {
-            echo "Build completate: ${FE_IMAGE} e ${BE_IMAGE}"
-        }
-        failure {
-            echo "Errore durante la build. Controlla il Console Output."
         }
     }
 }
