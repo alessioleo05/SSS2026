@@ -4,17 +4,17 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/alessioleo05/SomeBankingApp.git'
+                git branch: 'main', url: 'https://github.com/alessioleo05/SSS2026.git'
             }
         }
         stage('Build Backend') {
             steps {
-                sh 'docker build -t backend-container ./backend'
+                sh 'docker build -t backend-container ./SomeBankingApp/backend'
             }
         }
         stage('Build Frontend') {
             steps {
-                sh 'docker build -t frontend-container ./frontend'
+                sh 'docker build -t frontend-container ./SomeBankingApp/frontend'
             }
         }
     }
